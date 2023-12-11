@@ -1,17 +1,8 @@
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 
-from models.operation import Operation
-from src.utils import get_all_operations, get_mask_paymon
-
-
-@pytest.fixture()
-def path():
-    path_ = Path(__file__).parent.parent
-    test_operations_path = path_.joinpath('tests', 'test_operations.json')
-    return test_operations_path
+from models.operation import Operation, get_operation_instances, sort_operation_by_date
 
 
 @pytest.fixture()
@@ -96,13 +87,46 @@ def json_data():
              'to': 'Счет 72082042523231456215'}]
 
 
-def test_get_all_operations(path, json_data):
-    json_file = get_all_operations(path)
-    assert json_file == json_data
+@pytest.fixture()
+def operation_instances(json_data):
+    operation_instances = []
+    for operation in json_data:
+        operation_instances.append(Operation(
+            num_id=operation['id'],
+            date=operation['date'],
+            state=operation['state'],
+            operation_amount=operation['operationAmount'],
+            description=operation['description'],
+            from_=operation.get('from', ''),
+            to=operation['to'],
+        ))
+    return operation_instances
 
 
-@pytest.mark.parametrize('num_card, expected', [("Visa Classic 6831982476737658", "Visa Classic 6831 98** **** 7658"),
-                                                ("Счет 72082042523231456215", "Счет **6215"),
-                                                ('', '')])
-def test_get_mask_paymon(num_card, expected):
-    assert get_mask_paymon(num_card) == expected
+def test_get_operation_instances(json_data):
+    operation_instances = get_operation_instances(json_data)
+    assert operation_instances[0].num_id == 441945886
+    assert operation_instances[0].date == datetime(2019, 8, 26, 10, 50, 58, 294041)
+    assert operation_instances[0].state == "EXECUTED"
+    assert operation_instances[0].operation_amount == {"amount": "31957.58", "currency":
+        {
+            "name": "руб.",
+            "code": "RUB"}}
+    assert operation_instances[0].description == "Перевод организации"
+    assert operation_instances[0].from_ == "Maestro 1596 83** **** 5199"
+    assert operation_instances[0].to == "Счет **9589"
+
+
+@pytest.mark.parametrize('index, expected', [(0, '2019-08-26T10:50:58.294041'),
+                                             (1, '2019-07-12T20:41:47.882230'),
+                                             (2, '2019-07-03T18:35:29.512364'),
+                                             (3, '2019-04-04T23:20:05.206878'),
+                                             (4, '2019-03-23T01:09:46.296404'),
+                                             (5, '2018-12-20T16:43:26.929246'),
+                                             (6, '2018-08-19T04:27:37.904916'),
+                                             (7, '2018-07-11T02:26:18.671407'),
+                                             (8, '2018-06-30T02:08:58.425572'),
+                                             (9, '2018-03-23T10:45:06.972075'), ])
+def test_sort_operation_by_date(operation_instances, index, expected):
+    sort_operations = sort_operation_by_date(operation_instances)
+    assert sort_operations[index].date == expected
