@@ -31,7 +31,7 @@ def get_operation_instances(operations: list[dict]) -> list[Operation]:
                     operation_amount=operation['operationAmount'],
                     description=operation['description'],
                     from_=get_mask_paymon(operation.get('from', '')),
-                    to=operation['to'],
+                    to=get_mask_paymon(operation['to']),
                 )
         operation_instances.append(operation_instance)
     return operation_instances
@@ -51,9 +51,8 @@ def get_mask_paymon(payment_method: str) -> str:
         list_info = payment_method.split()
         name = ' '.join(list_info[:-1])
         number = list_info[-1]
-        if 'Счет' == name.lower():
+        if 'Счет' == name:
             mask_paymon = name+' **'+number[-4:]
-            print(mask_paymon)
         else:
             mask_paymon = name+' '+number[:4]+' '+number[4:6]+'** **** '+number[-4:]
     else:
