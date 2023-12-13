@@ -42,7 +42,7 @@ def get_operation_instances(operations: list[dict]) -> list[Operation]:
                     from_=get_mask_paymon(operation.get('from', '')),
                     to=get_mask_paymon(operation['to']),
                 )
-        operation_instances.append(operation_instance)
+                operation_instances.append(operation_instance)
     return operation_instances
 
 
